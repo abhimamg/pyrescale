@@ -1,0 +1,29 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: detect-private-key
+    -   id: requirements-txt-fixer
+    -   id: check-case-conflict
+    -   id: check-docstring-first
+    -   id: debug-statements
+    -   id: name-tests-test
+        args: ["--pytest-test-first"]
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.263
+    hooks:
+    -   id: ruff
+-   repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+    -   id: isort
+-   repo: local
+    hooks:
+    -   id: black
+        name: black
+        entry: black .
+        language: python
+        types: [python]

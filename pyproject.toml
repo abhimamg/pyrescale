@@ -1,0 +1,72 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0"]
+
+[project]
+authors = [
+  { name = "Abhishek Mamgain", email = "abhishek.mamgain@technipfmc.com" },
+]
+classifiers = [
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+]
+dependencies = ["rich-click>=1.6", "requests>=2.31.0"]
+description = "A python API to communicate with Rescale platform."
+name = "rescaleapi"
+readme = "README.md"
+requires-python = ">=3.8"
+version = "0.0.1"
+
+[project.optional-dependencies]
+dev = [
+  "black>=23.9.1",
+  "build>=1.0.3",
+  "isort>=5.12",
+  "myst-parser>=2",
+  "pre-commit>=3.5.0",
+  "ruff>=0.1.0",
+]
+
+[project.urls]
+repository = "https://dev.azure.com/technipfmc-dev/SubseaDesign/_git/rescale-api"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+
+[tool.ruff]
+select = [
+  "B",   # bugbear
+  "B9",  # bugbear's opinionated warnings
+  "C",   # mccabe
+  "C4",  # comprehensions
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "G",   # logging-format
+  "PD",  # pandas-vet
+  "PT",  # pytest-style
+  "Q",   # quotes
+  "RSE", # raise
+  "S",   # bandit
+  "SIM", # simplify
+  "T10", # debugger
+  "W",   # pycodestyle
+]
+
+ignore = []
+
+[tool.ruff.per-file-ignores]
+# bandit to ignore test assert statements
+"tests/*" = ["S101"]
+
+[tool.isort]
+profile = "black"
+
+[tool.distutils.bdist_wheel]
+universal = true
