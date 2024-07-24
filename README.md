@@ -61,7 +61,7 @@ j.add_abaqus(version="2022", inputfiles=["job1.inp"], command="abaqus j=job1.inp
 To get a list of available Abaqus versions, run:
 
 ```python
-j.get_abaqus_versions()
+versions = j.get_abaqus_versions()
 print("Available Abaqus versions:", versions)
 ```
 
