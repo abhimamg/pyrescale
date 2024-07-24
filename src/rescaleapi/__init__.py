@@ -1,7 +1,7 @@
 import json
 import sys
 import requests
-import rich_click as click
+import click
 import os
 import io
 
@@ -11,15 +11,6 @@ DEFAULT_TIMEOUT = 60
 def get_api(api_key):
     """
     Get the Rescale API key from the provided input or environment variable.
-
-    Args:
-        api_key (str): The Rescale API key.
-
-    Returns:
-        str: The Rescale API key.
-
-    Raises:
-        click.ClickException: If the API key is not found.
     """
     if api_key is None:
         api_key = os.environ.get("RESCALE_API_KEY", None)
@@ -32,29 +23,6 @@ def get_api(api_key):
 class Job:
     """
     Represents a Rescale Job.
-
-    Attributes:
-        id (str): The Rescale job ID.
-        api_key (str): The Rescale API key.
-        analyses (list): List of analyses associated with the job.
-        param (str): Parameter file ID associated with the job.
-
-    Methods:
-        add_param(param): Adds a parameter to the job.
-        url(): Returns the job's URL.
-        search_file(search_string): Searches for a file in the job.
-        status(): Retrieves the status of the job and its associated cluster.
-        get_meta(): Retrieves metadata for the job.
-        add_hardware(cores, slots): Adds hardware specifications to the job.
-        get_available_analyses(): Retrieves available analyses from Rescale.
-        get_available_hardwares(): Retrieves available hardware configurations from Rescale.
-        get_hardware_codes(): Retrieves hardware codes and their names.
-        get_abaqus_versions(): Retrieves available Abaqus versions.
-        add_analysis(): Adds an analysis to the job.
-        add_conda(): Adds a Miniconda analysis to the job.
-        add_abaqus(): Adds an Abaqus analysis to the job.
-        create(name): Creates a new job.
-        submit(): Submits the job for execution.
     """
 
     def __init__(self, job_id=None, api_key=None):
@@ -84,21 +52,12 @@ class Job:
     def url(self):
         """
         Returns the job's URL.
-
-        Returns:
-            str: The job's URL.
         """
         return f"https://platform.rescale.com/api/v2/jobs/{self.id or ''}"
 
     def search_file(self, search_string):
         """
         Searches for a file in the job.
-
-        Args:
-            search_string (str): The string to search for in files.
-
-        Returns:
-            None
         """
         pass
 
@@ -106,9 +65,6 @@ class Job:
     def status(self):
         """
         Retrieves the status of the job and its associated cluster.
-
-        Returns:
-            dict: A dictionary containing job and cluster statuses.
         """
         status_ = {}
         url = self.url + "/statuses/"
@@ -120,22 +76,12 @@ class Job:
     def get_meta(self):
         """
         Retrieves metadata for the job.
-
-        Returns:
-            None
         """
         self.meta = send_get(self.url, self.api_key)
 
     def add_hardware(self, cores=1, slots=1):
         """
         Adds hardware specifications to the job.
-
-        Args:
-            cores (int): Number of cores.
-            slots (int): Number of slots.
-
-        Returns:
-            None
         """
         click.echo(f"Adding hardware: {click.style('emerald_max', fg='cyan')}")
         self.hardware = {
@@ -147,9 +93,6 @@ class Job:
     def get_available_analyses(self):
         """
         Retrieves available analyses from Rescale.
-
-        Returns:
-            dict: A dictionary containing available analyses.
         """
         url = "https://platform.rescale.com/api/v2/analyses/"
         return send_get(url, self.api_key, timeout=200)
@@ -157,9 +100,6 @@ class Job:
     def get_available_hardwares(self):
         """
         Retrieves available hardware configurations from Rescale.
-
-        Returns:
-            dict: A dictionary containing available hardware configurations.
         """
         url = "https://platform.rescale.com/api/v2/coretypes/?page=1&page_size=500"
         return send_get(url, self.api_key, timeout=200)
@@ -167,9 +107,6 @@ class Job:
     def get_hardware_codes(self):
         """
         Retrieves hardware codes and their names.
-
-        Returns:
-            dict: A dictionary containing hardware codes and their names.
         """
         hardwares = self.get_available_hardwares()
         hardwares = [(i["code"], i["name"]) for i in hardwares["results"]]
@@ -178,9 +115,6 @@ class Job:
     def get_abaqus_versions(self):
         """
         Retrieves available Abaqus versions.
-
-        Returns:
-            dict: A dictionary containing Abaqus versions and their codes.
         """
         a = self.get_available_analyses()
         abaqus_versions = [i for i in a["results"] if i["code"] == "abaqus"]
@@ -202,19 +136,6 @@ class Job:
     ):
         """
         Adds an analysis to the job.
-
-        Args:
-            code (str): Analysis code.
-            version (str): Analysis version.
-            command (str): Analysis command.
-            inputfiles (list): List of input files.
-            templates (list): List of template files.
-            post_script: Post-process script.
-            post_command (str): Post-process command.
-            env_var (dict): Environment variables.
-
-        Returns:
-            None
         """
         if bool(post_command) != bool(post_script):
             raise Exception("Both post_command and post_script must be provided")
@@ -246,22 +167,12 @@ class Job:
     ):
         """
         Adds a Miniconda analysis to the job.
-
-        Args:
-            inputfiles (list): List of input files.
-            command (str): Analysis command.
-            post_script: Post-process script.
-            post_command (str): Post-process command.
-            env_var (dict): Environment variables.
-
-        Returns:
-            None
         """
-        click.echo(f"Adding Miniconda {click.style('4.8.4', fg='cyan')}")
+        click.echo(f"Adding Miniconda {click.style('5.3.1', fg='cyan')}")
 
         self.add_analysis(
-            code="miniconda",
-            version="4.8.4",
+            code="anaconda",
+            version="5.3.1",
             command=command,
             inputfiles=inputfiles,
             post_script=post_script,
@@ -279,16 +190,6 @@ class Job:
     ):
         """
         Adds an Abaqus analysis to the job.
-
-        Args:
-            version (str): Abaqus version.
-            inputfiles (list): List of input files.
-            templates (list): List of template files.
-            command (str): Analysis command.
-            license_ (str): License information.
-
-        Returns:
-            None
         """
         versions = {
             "2023": "2023-hf4",
@@ -316,15 +217,6 @@ class Job:
     def create(self, name):
         """
         Creates a new job.
-
-        Args:
-            name (str): Name of the job.
-
-        Returns:
-            None
-
-        Raises:
-            Exception: If the job already exists or parameter conditions are not met.
         """
         click.echo(f"Creating new job: {click.style(name, fg='cyan')}")
         if self.id is not None:
@@ -348,9 +240,6 @@ class Job:
     def submit(self):
         """
         Submits the job for execution.
-
-        Returns:
-            None
         """
         click.echo(f"Submitting job: {click.style(self.id, fg='cyan')}")
         url = self.url + "/submit/"
@@ -360,34 +249,11 @@ class Job:
 class File:
     """
     Represents a Rescale File.
-
-    Attributes:
-        id (str): The Rescale file ID.
-        path (str): The file path.
-        api_key (str): The Rescale API key.
-        is_text (bool): Indicates whether the file is a text file.
-        name (str): The name of the file.
-
-    Methods:
-        url(): Returns the file's URL.
-        get_meta(): Retrieves metadata for the file.
-        patch(data): Updates file metadata.
-        id_string(): Returns the file ID as a dictionary.
-        template_string(): Returns the file ID and processed filename as a dictionary.
-        list_all_files(): Retrieves a list of all files from Rescale.
-        upload(): Uploads the file to Rescale.
     """
 
     def __init__(self, file=None, upload=False, api_key=None, name=None, is_text=False):
         """
         Initializes a new Rescale File.
-
-        Args:
-            file: The Rescale file ID or file path.
-            upload (bool): Indicates whether the file needs to be uploaded.
-            api_key (str): The Rescale API key.
-            name (str): The name of the file.
-            is_text (bool): Indicates whether the file is a text file.
         """
         self.id = None if upload else file
         self.path = file if upload else None
@@ -399,18 +265,12 @@ class File:
     def url(self):
         """
         Returns the file's URL.
-
-        Returns:
-            str: The file's URL.
         """
         return f"https://platform.rescale.com/api/v2/files/{self.id or ''}"
 
     def get_meta(self):
         """
         Retrieves metadata for the file.
-
-        Returns:
-            None
         """
         self.meta = send_get(self.url, self.api_key)
         self.name = self.meta["name"]
@@ -418,21 +278,12 @@ class File:
     def patch(self, data):
         """
         Updates file metadata.
-
-        Args:
-            data: The data to be patched.
-
-        Returns:
-            None
         """
         self.meta = send_patch(self.url, self.api_key, data=data)
 
     def id_string(self):
         """
         Returns the file ID as a dictionary.
-
-        Returns:
-            dict: The file ID.
         """
         if self.id is None:
             self.upload()
@@ -441,9 +292,6 @@ class File:
     def template_string(self):
         """
         Returns the file ID and processed filename as a dictionary.
-
-        Returns:
-            dict: The file ID and processed filename.
         """
         id_string = self.id_string()
         if self.name is None:
@@ -456,9 +304,6 @@ class File:
     def list_all_files(self):
         """
         Retrieves a list of all files from Rescale.
-
-        Returns:
-            dict: A dictionary containing information about all files.
         """
         url = "https://platform.rescale.com/api/v2/files/"
         return send_get(url, self.api_key)
@@ -466,9 +311,6 @@ class File:
     def upload(self):
         """
         Uploads the file to Rescale.
-
-        Returns:
-            None
         """
         click.echo(
             f"Uploading {click.style(self.name if self.is_text else self.path, fg='cyan')}"
@@ -503,15 +345,6 @@ class File:
 def get_json(resp):
     """
     Extract JSON content from the response.
-
-    Args:
-        resp (requests.Response): The HTTP response object.
-
-    Returns:
-        dict: Parsed JSON content from the response.
-
-    Raises:
-        click.ClickException: If the response status code is greater than or equal to 300.
     """
     try:
         content = json.loads(resp.content)
@@ -531,9 +364,6 @@ def get_json(resp):
 def api_key_error():
     """
     Display an error message about the missing or invalid API key and exit the script.
-
-    Raises:
-        click.ClickException: Always raised to terminate the script execution.
     """
     s1 = click.style("setx RESCALE_API_KEY XXXXXXXXXX", fg="cyan", bold=True)
     msg = (
@@ -549,17 +379,6 @@ def api_key_error():
 def send_get(url, api_key, timeout=DEFAULT_TIMEOUT):
     """
     Send a GET request to the specified URL with the Rescale API key.
-
-    Args:
-        url (str): The URL to send the GET request to.
-        api_key (str): The Rescale API key.
-        timeout (int, optional): Timeout for the HTTP request. Defaults to DEFAULT_TIMEOUT.
-
-    Returns:
-        dict: Parsed JSON content from the response.
-
-    Raises:
-        click.ClickException: If there is an issue with the API key or the response status code is >= 300.
     """
     headers = {
         "Content-Type": "application/json",
@@ -584,18 +403,6 @@ def send_post(
 ):
     """
     Send a POST request to the specified URL with the Rescale API key.
-
-    Args:
-        url (str): The URL to send the POST request to.
-        api_key (str): The Rescale API key.
-        json_data (dict, optional): JSON data to include in the request body. Defaults to None.
-        timeout (int, optional): Timeout for the HTTP request. Defaults to DEFAULT_TIMEOUT.
-
-    Returns:
-        dict: Parsed JSON content from the response.
-
-    Raises:
-        click.ClickException: If there is an issue with the API key or the response status code is >= 300.
     """
     headers = {
         "Content-Type": "application/json",
@@ -620,18 +427,6 @@ def send_patch(
 ):
     """
     Send a PATCH request to the specified URL with the Rescale API key.
-
-    Args:
-        url (str): The URL to send the PATCH request to.
-        api_key (str): The Rescale API key.
-        data (dict): Data to include in the request body.
-        timeout (int, optional): Timeout for the HTTP request. Defaults to DEFAULT_TIMEOUT.
-
-    Returns:
-        dict: Parsed JSON content from the response.
-
-    Raises:
-        click.ClickException: If there is an issue with the API key or the response status code is >= 300.
     """
     headers = {
         "Content-Type": "application/json",
