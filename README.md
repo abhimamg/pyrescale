@@ -25,43 +25,39 @@ pip install rescaleapi
 
 Here's an example of how to create and submit your first job using the Rescale API:
 
+**Set API Key**
+Add user enviroment variable `RESCALE_API_KEY` with your API key.
+
 
 **Create First Job**
 
 ```python
-from rescaleapi import Job
+from rescaleapi import Hardware, Job, Abaqus, File
 
-# Initialize the Job with your API key
-j = Job(api_key="xxxxxxxxxxxxxx")
+# Collect the files. You can either upload files from your local machine or use the Rescale API to upload files from your Rescale account.
+inputfiles = [File().load_from_id("zNXApj"), File("files.zip")]
 
 # Add hardware specifications
-j.add_hardware(cores=1, slots=1)
+hardware = Hardware(coresPerSlot=1, slots=1, coreType="emerald_max")
 
-# Add a Conda environment and specify the input files and command
-j.add_conda(inputfiles=["main.py"], command="python main.py")
+# Add Software
+abaqus = Abaqus(version = "2022-2328", inputfiles=inputfiles, command="abaqus j=job1.inp interactive")
 
 # Create the job with a name
-j.create("Demo Example")
+job = Job("Demo Example",  hardware = hardware, analyses=[abaqus])
+job.create()
 
 # Submit the job
 j.submit()
 ```
 
 
-**Adding Abaqus as a Software**
-
-To add Abaqus as a software in your job, use the following code:
-
-```python
-j.add_abaqus(version="2022", inputfiles=["job1.inp"], command="abaqus j=job1.inp interactive")
-```
-
 **Get Available Abaqus Versions**
 
-To get a list of available Abaqus versions, run:
+To get a list of available Abaqus versions codes, run:
 
 ```python
-versions = j.get_abaqus_versions()
-print("Available Abaqus versions:", versions)
+versions = Abaqus.get_version_code("2024 HF4 (FlexNet Licensing)")
+print(versions)
 ```
 
