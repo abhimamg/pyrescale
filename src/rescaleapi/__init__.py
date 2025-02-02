@@ -159,8 +159,8 @@ class Software(ApiResponse):
 @dataclass
 class Abaqus(Software):
     """Abaqus-specific settings."""
+    lic: str 
     code: str = "abaqus"
-    lic: str = "27101@SV10266"
 
     @staticmethod
     def get_version_code(name: str) -> str:
