@@ -1,36 +1,43 @@
+# Standard library imports
 import json
 import sys
-import requests
-import click
 import os
 from dataclasses import dataclass
 from typing import List, Optional
 
+# Third-party imports
+import requests
+import click
+
+# Default timeout for API requests in seconds
 DEFAULT_TIMEOUT = 60
 
-
 def set_api_key(api_key: str) -> None:
+    """Store Rescale API key in environment."""
     os.environ["RESCALE_API_KEY"] = api_key
 
-
 def get_api_key() -> str:
+    """Get Rescale API key from environment."""
     return os.environ.get("RESCALE_API_KEY")
-
 
 @dataclass
 class ApiResponse:
+    """Base class for API interactions."""
     BASE_URL = "https://platform.rescale.com/api/v2/"
 
     def __post_init__(self):
+        """Set API key after init."""
         self.api_key = get_api_key()
 
     def _get_headers(self) -> dict:
+        """Get request headers."""
         return {
             "Content-Type": "application/json",
             "Authorization": f"Token {self.api_key}",
         }
 
     def send_get(self, endpoint: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
+        """Send GET request."""
         url = f"{self.BASE_URL}{endpoint}"
         with requests.Session() as session:
             response = session.get(
@@ -38,7 +45,7 @@ class ApiResponse:
                 headers=self._get_headers(),
                 timeout=timeout,
             )
-        return self.parse_response(response)
+            return self.parse_response(response)
 
     def send_post(
         self,
@@ -46,6 +53,7 @@ class ApiResponse:
         json_data: Optional[dict] = None,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> dict:
+        """Send POST request."""
         url = f"{self.BASE_URL}{endpoint}"
         with requests.Session() as session:
             response = session.post(
@@ -54,10 +62,11 @@ class ApiResponse:
                 json=json_data,
                 timeout=timeout,
             )
-        return self.parse_response(response)
+            return self.parse_response(response)
 
     @staticmethod
     def parse_response(response: requests.Response) -> dict:
+        """Parse API response."""
         if response.status_code >= 300:
             click.echo(f"Error: {response.status_code}")
             click.echo(response.text)
@@ -67,30 +76,33 @@ class ApiResponse:
         except json.JSONDecodeError:
             return response.text
 
-
 @dataclass
 class Hardware(ApiResponse):
+    """Hardware configuration settings."""
     coreType: str = "emerald_max"
     coresPerSlot: int = 1
     slots: int = 1
 
     def get_available_hardwares(self, page: int = 1) -> dict:
+        """Get hardware options."""
         return self.send_get(f"coretypes?page={page}")
 
     def to_json(self) -> dict:
+        """Convert to JSON format."""
         return {
             "coreType": self.coreType,
             "coresPerSlot": self.coresPerSlot,
             "slots": self.slots,
         }
 
-
 @dataclass
 class File(ApiResponse):
+    """File upload handler."""
     path: Optional[str] = None
     id: Optional[str] = None
 
     def upload(self) -> None:
+        """Upload file to platform."""
         if self.id:
             raise ValueError("File already uploaded")
 
@@ -102,16 +114,17 @@ class File(ApiResponse):
                 files={"file": file},
                 headers={"Authorization": f"Token {self.api_key}"},
             )
-        result = self.parse_response(response)
-        self.id = result["id"]
+            result = self.parse_response(response)
+            self.id = result["id"]
 
     @classmethod
     def load_from_id(cls, id: str) -> "File":
+        """Create from existing file ID."""
         return cls(id=id)
-
 
 @dataclass
 class Software(ApiResponse):
+    """Software configuration settings."""
     code: Optional[str] = None
     version: Optional[str] = None
     command: Optional[str] = None
@@ -119,15 +132,18 @@ class Software(ApiResponse):
     lic: Optional[str] = None
 
     def get_available_softwares(self, page: int = 1) -> dict:
+        """Get software options."""
         return self.send_get(f"analyses?page={page}")
 
     def upload_files(self) -> None:
+        """Upload input files."""
         if self.inputfiles:
             for file in self.inputfiles:
                 if not file.id:
                     file.upload()
 
     def to_json(self, hardware: Hardware) -> dict:
+        """Convert to JSON format."""
         self.upload_files()
         return {
             "analysis": {
@@ -140,14 +156,15 @@ class Software(ApiResponse):
             "envVars": {"LM_LICENSE_FILE": self.lic} if self.lic else {},
         }
 
-
 @dataclass
 class Abaqus(Software):
-    code:str = "abaqus"
+    """Abaqus-specific settings."""
+    code: str = "abaqus"
     lic: str = "27101@SV10266"
 
     @staticmethod
     def get_version_code(name: str) -> str:
+        """Convert version name to code."""
         codes = {
             "2024 HF4 (FlexNet Licensing)": "2024-hf4",
             "2023 HF9 (FlexNet Licensing)": "2023-hf9",
@@ -187,14 +204,15 @@ class Abaqus(Software):
                 f"Key '{name}' not found! Available keys are: {available_keys}"
             ) from err
 
-
 @dataclass
 class Job(ApiResponse):
+    """Job submission handler."""
     name: str
     hardware: Optional[Hardware]
     analyses: Optional[List[Software]]
 
     def create(self) -> None:
+        """Create new job."""
         json_data = {
             "name": self.name,
             "jobanalyses": [
@@ -205,10 +223,12 @@ class Job(ApiResponse):
         self.id = response["id"]
 
     def submit(self) -> None:
+        """Submit job for execution."""
         if not self.id:
             raise ValueError("Job must be created before submission")
         self.send_post(f"jobs/{self.id}/submit/")
 
     @classmethod
     def load_from_id(cls, id: str) -> "Job":
+        """Create from existing job ID."""
         return cls(id=id)
