@@ -17,7 +17,7 @@ To use the Rescale API, you need to obtain an API key. You can get your Rescale 
 To install the Rescale API package, run the following command:
 
 ```bash
-pip install rescaleapi
+pip install git+https://github.com/abhimamg/pyrescale.git
 ```
 
 
